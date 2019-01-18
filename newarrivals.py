@@ -1083,41 +1083,50 @@ class productDetail(Resource):
 class AddToCartSite(Resource):
     def post(self):
         json_data = request.get_json(force=True)
-        user_id=json_data['user_id']
-        #req_randomnumber=json_data['random_no'] if 'random_no' in json_data else ''       
+        user_id=json_data['user_id'] 
         model =json_data['modelNo']
-        supp_product=Sup_Upload.objects(upload_modelno=model).only('upload_tax','upload_id','prices','upload_subcategory','upload_brand','upload_mrp','end_user_disc')
-        for ofrprice in supp_product:
-                tax=ofrprice.upload_tax
-                upload_photo='011'+ofrprice.upload_id+'.jpg'
-                image=upload_photo
-                subcategory=ofrprice.upload_subcategory
-                brand=ofrprice.upload_brand
-                offer_price = ofrprice.upload_mrp
-                offer_price_gst=ofrprice.upload_mrp
-                order_details=OrderitemsSite(productdescription,qty,offer_price,offer_price_gst,tax,image,subcategory,brand)
-                customer_order.orderitemsite.append(order_details)
-                customer_order.save()
+        qty=json_data['qty']
+        supp_product=Sup_Upload.objects.get(upload_modelno=model)#.only('upload_tax','upload_id','prices','upload_subcategory','upload_brand','upload_mrp','end_user_disc')
+        tax=supp_product.upload_tax
+        upload_photo='011'+supp_product.upload_id+'.jpg'
+        image=upload_photo
+        subcategory=supp_product.upload_subcategory 
+        brand=supp_product.upload_brand
+        upload_mrp = supp_product.upload_mrp
+        upload_netPrice=supp_product.upload_netPrice
+        upload_discount=supp_product.upload_discount
+        print(type(tax))
+        sub_tot=str(round((int(qty)*float(upload_netPrice))*(1+int(tax)/100)))
+        #grandtotal=sum(int(sub_tot))
+        customer_order=OrderitemsSite(user_id=user_id,model=model,qty=qty,tax=tax,upload_photo=upload_photo,subcategory=subcategory,brand=brand,upload_mrp=upload_mrp,upload_netPrice=upload_netPrice,upload_discount=upload_discount,sub_tot=sub_tot)
+        customer_order.save()
         return {"status":"item added to cart"}
 
     def get(self):
         if request.headers.has_key('secret_key') and request.headers['secret_key']==secret_key:
             user=request.args['param_other1']
-            addtocartget=addtocart.objects(username=user)
-            si=[]
-            for i in addtocartget:
-                se={}
-                se['username']=i.username
-                se['subcategory']=i.subcategory
-                se['modelno']=i.modelno
-                se['image']=i.image
-                se['upload_mrp']=i.upload_mrp
-                se['upload_discount']=i.upload_discount
-                se['upload_netPrice']=i.upload_netPrice
-            si.append(se)
-            return {"status":"success","data":si}
+            coll=OrderitemsSite.objects(user_id=user).order_by('-user_id')
+            cl=coll.count()
+            collections = json.loads(coll.to_json())
+            return {"status":"success","data":collections,"count":cl}
+    def put(self):
+        if request.headers.has_key('secret_key') and request.headers['secret_key']==secret_key:
+            json_data = request.get_json(force=True)
+            user_id=json_data['user_id']
+            user=json_data['qty']
+            coll=OrderitemsSite.objects.get(user_id=user_id)
+            coll.qty=user
+            coll.save()
+            return {"status":"updated"}
+    def delete(self):
+        if request.headers.has_key('secret_key') and request.headers['secret_key']==secret_key:
+            json_data = request.get_json(force=True)
+            user_id=json_data['user_id']
+            coll=OrderitemsSite.objects.get(user_id=user_id)
+            coll.delete()
+            return {"status":"Deleted"}       
 
-        
+       
 
 
        

@@ -39,8 +39,21 @@ class UserSignup(DynamicDocument):
 
      def __repr__(self):
         return '<User %r>' % (self.username)
-
-
+class OrderitemsSite(DynamicDocument):
+     user_id = StringField()
+     model = StringField()
+     qty = IntField()
+     tax = StringField()
+     image = StringField()
+     subcategory = StringField()
+     brand = StringField()
+     upload_mrp = StringField()
+     upload_netPrice=StringField()
+     upload_discount=StringField()
+     sub_tot=StringField()
+     #grandtotal=IntField()
+     
+        
 class atr1(EmbeddedDocument):
     atrname = StringField()
     atrvalue = StringField()
